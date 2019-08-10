@@ -1,6 +1,6 @@
 {
   "name": "@hqjs/babel-plugin-transform-json-imports",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "Transform json imports",
   "main": "index.js",
   "scripts": {
