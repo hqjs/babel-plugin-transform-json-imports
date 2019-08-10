@@ -9,20 +9,20 @@ const replace = (baseURI, dirname) =>
   (match, dots, rest) => `${baseURI}${path.join(dirname, dots, rest)}`;
 
 const notRequire = (t, nodePath) => {
-  const [ requireArg, ...rest ] = nodePath.node.arguments;
+  const [requireArg, ...rest] = nodePath.node.arguments;
   return nodePath.node.callee.name !== 'require' ||
     rest.length !== 0 ||
     !t.isStringLiteral(requireArg) ||
     nodePath.scope.hasBinding('require');
 };
 
-module.exports = function({ types: t }) {
+module.exports = function ({ types: t }) {
   return {
     visitor: {
       CallExpression(nodePath, stats) {
         const { dirname } = stats.opts;
         if (notRequire(t, nodePath)) return;
-        const [ requireArg ] = nodePath.node.arguments;
+        const [requireArg] = nodePath.node.arguments;
         const { value: modName } = requireArg;
         if (notJsonImport(modName)) return;
 
@@ -58,14 +58,13 @@ function determineLeftExpression(t, node) {
     return buildObjectPatternFromDestructuredImport(t, node);
   }
 
-  const [ specifier ] = node.specifiers;
+  const [specifier] = node.specifiers;
 
   return t.identifier(specifier.local.name);
 }
 
 function isDestructuredImportExpression(t, node) {
-  const [ specifier, ...rest ] = node.specifiers;
-  return rest.length !== 0 || t.isImportDefaultSpecifier(specifier);
+  return node.specifiers.length !== 0 && node.specifiers.some(specifier => !t.isImportDefaultSpecifier(specifier));
 }
 
 function buildObjectPatternFromDestructuredImport(t, node) {
