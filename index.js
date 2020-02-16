@@ -1,4 +1,3 @@
-const fs = require('fs');
 const path = require('path');
 
 const RELATIVE_PATTERN = /\s*(\.{1,2})\/([^'"]*)/g;
@@ -20,7 +19,7 @@ module.exports = function ({ types: t }) {
   return {
     visitor: {
       CallExpression(nodePath, stats) {
-        const { dirname } = stats.opts;
+        const { dirname, fs = require('fs') } = stats.opts;
         if (notRequire(t, nodePath)) return;
         const [requireArg] = nodePath.node.arguments;
         const { value: modName } = requireArg;
@@ -32,7 +31,7 @@ module.exports = function ({ types: t }) {
         nodePath.replaceWith(t.valueToNode(json));
       },
       ImportDeclaration(nodePath, stats) {
-        const { dirname } = stats.opts;
+        const { dirname, fs = require('fs') } = stats.opts;
         const { node } = nodePath;
         const { value: modName } = nodePath.node.source;
 
@@ -45,7 +44,7 @@ module.exports = function ({ types: t }) {
         nodePath.replaceWith(t.variableDeclaration('const', [
           t.variableDeclarator(
             leftExpression,
-            t.valueToNode(json),
+            t.valueToNode(cleanJSON(t, node, json)),
           ),
         ]));
       },
@@ -74,4 +73,17 @@ function buildObjectPatternFromDestructuredImport(t, node) {
   ));
 
   return t.objectPattern(properties);
+}
+
+function cleanJSON(t, node, json) {
+  if (isDestructuredImportExpression(t, node)) {
+    const res = {};
+    for (const specifier of node.specifiers) {
+      const { name } = specifier.imported;
+      if (name in json) res[name] = json[name];
+    }
+    return res;
+  }
+
+  return json;
 }
