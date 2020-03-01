@@ -21,14 +21,15 @@ module.exports = function ({ types: t }) {
       CallExpression(nodePath, stats) {
         const { dirname, fs = require('fs') } = stats.opts;
         if (notRequire(t, nodePath)) return;
-        const [requireArg] = nodePath.node.arguments;
+        const { node, parent } = nodePath;
+        const [requireArg] = node.arguments;
         const { value: modName } = requireArg;
         if (notJsonImport(modName)) return;
 
         const filepath = modName.replace(RELATIVE_PATTERN, replace('', dirname));
         const json = JSON.parse(fs.readFileSync(filepath, { encoding: 'utf8' }));
 
-        nodePath.replaceWith(t.valueToNode(json));
+        nodePath.replaceWith(t.valueToNode(cleanRequiredJSON(t, parent, json)));
       },
       ImportDeclaration(nodePath, stats) {
         const { dirname, fs = require('fs') } = stats.opts;
@@ -80,6 +81,19 @@ function cleanJSON(t, node, json) {
     const res = {};
     for (const specifier of node.specifiers) {
       const { name } = specifier.imported;
+      if (name in json) res[name] = json[name];
+    }
+    return res;
+  }
+
+  return json;
+}
+
+function cleanRequiredJSON(t, node, json) {
+  if (t.isObjectPattern(node.id)) {
+    const res = {};
+    for (const property of node.id.properties) {
+      const { name } = property.key;
       if (name in json) res[name] = json[name];
     }
     return res;

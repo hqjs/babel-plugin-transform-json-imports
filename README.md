@@ -31,6 +31,12 @@ import values from './values.json';
 // Or with destructure
 import {a, b} from './values.json';
 ```
+or similar expressions with require
+```js
+const values = require('./values.json');
+// Or with destructure
+const {a, b} = require('./values.json');
+```
 we will obtain
 ```js
 const values = {a: 1, b: 2, c: 3};
