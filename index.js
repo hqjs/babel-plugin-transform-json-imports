@@ -1,11 +1,6 @@
 const path = require('path');
 
-const RELATIVE_PATTERN = /\s*(\.{1,2})\/([^'"]*)/g;
-
 const notJsonImport = modName => !modName.endsWith('.json');
-
-const replace = (baseURI, dirname) =>
-  (match, dots, rest) => `${baseURI}${path.join(dirname, dots, rest)}`;
 
 const notRequire = (t, nodePath) => {
   const [requireArg, ...rest] = nodePath.node.arguments;
@@ -19,27 +14,39 @@ module.exports = function ({ types: t }) {
   return {
     visitor: {
       CallExpression(nodePath, stats) {
-        const { dirname, fs = require('fs') } = stats.opts;
+        const { dirname, fs = require('fs'), root = '' } = stats.opts;
         if (notRequire(t, nodePath)) return;
         const { node, parent } = nodePath;
         const [requireArg] = node.arguments;
         const { value: modName } = requireArg;
+
         if (notJsonImport(modName)) return;
 
-        const filepath = modName.replace(RELATIVE_PATTERN, replace('', dirname));
+        const filepath = modName.startsWith('/') ?
+          `${root}${modName}` :
+          modName.startsWith('.') ?
+            path.join(dirname, modName) :
+            modName;
+
         const json = JSON.parse(fs.readFileSync(filepath, { encoding: 'utf8' }));
 
         nodePath.replaceWith(t.valueToNode(cleanRequiredJSON(t, parent, json)));
       },
       ImportDeclaration(nodePath, stats) {
-        const { dirname, fs = require('fs') } = stats.opts;
+        const { dirname, fs = require('fs'), root = '' } = stats.opts;
         const { node } = nodePath;
         const { value: modName } = nodePath.node.source;
 
         if (notJsonImport(modName)) return;
 
         const leftExpression = determineLeftExpression(t, node);
-        const filepath = modName.replace(RELATIVE_PATTERN, replace('', dirname));
+
+        const filepath = modName.startsWith('/') ?
+          `${root}${modName}` :
+          modName.startsWith('.') ?
+            path.join(dirname, modName) :
+            modName;
+
         const json = JSON.parse(fs.readFileSync(filepath, { encoding: 'utf8' }));
 
         nodePath.replaceWith(t.variableDeclaration('const', [

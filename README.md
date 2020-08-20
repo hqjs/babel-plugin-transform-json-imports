@@ -9,7 +9,7 @@ npm install hqjs@babel-plugin-transform-json-imports
 # Usage
 ```json
 {
-  "plugins": [["hqjs@babel-plugin-transform-json-imports", { "dirname": "/json/root/directory" }]]
+  "plugins": [["hqjs@babel-plugin-transform-json-imports", { "dirname": "/json/directory", "root": "/root/directory" }]]
 }
 ```
 If you are invoking this plugin from javascript it becomes possible to pass filesystem implementation trough `fs` option, it expects the object with `readFileSync` method defined.
