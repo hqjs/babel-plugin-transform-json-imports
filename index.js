@@ -23,7 +23,7 @@ module.exports = function ({ types: t }) {
         if (notJsonImport(modName)) return;
 
         const filepath = modName.startsWith('/') ?
-          `${root}${modName}` :
+          path.join(root, modName) :
           modName.startsWith('.') ?
             path.join(dirname, modName) :
             modName;
@@ -42,7 +42,7 @@ module.exports = function ({ types: t }) {
         const leftExpression = determineLeftExpression(t, node);
 
         const filepath = modName.startsWith('/') ?
-          `${root}${modName}` :
+          path.join(root, modName) :
           modName.startsWith('.') ?
             path.join(dirname, modName) :
             modName;
